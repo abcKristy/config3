@@ -1,0 +1,11 @@
+{# Конфигурация базы данных #}
+db_name = "test_db";
+db_user = "admin";
+db_password = "secret";
+
+begin
+name := $db_name$;
+user := $db_user$;
+password := $db_password$;
+hosts := ["db1.example.com" "db2.example.com"];
+end

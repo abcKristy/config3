@@ -1,0 +1,9 @@
+{# Конфигурация веб-сервера #}
+host = "127.0.0.1";
+port = 8080;
+
+begin
+host := $host$;
+port := $port$;
+routes := ["/home" "/about" "/contact"];
+end
