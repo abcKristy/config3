@@ -1,9 +1,13 @@
 {# Конфигурация сети #}
-ip = "192.168.1.1";
-netmask = "255.255.255.0";
+gateway = "192.168.1.1";
+dns = ["8.8.8.8" "8.8.4.4"];
 
 begin
-interface := "eth0";
-address := $ip$;
-netmask := $netmask$;
+gateway := $gateway$;
+dns := $dns$;
+devices := [
+  "device1"
+  "device2"
+  "device3"
+];
 end

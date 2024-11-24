@@ -1,11 +1,14 @@
 {# Конфигурация базы данных #}
-db_name = "test_db";
+db_host = "localhost";
+db_port = 5432;
 db_user = "admin";
-db_password = "secret";
+db_pass = "password";
 
 begin
-name := $db_name$;
-user := $db_user$;
-password := $db_password$;
-hosts := ["db1.example.com" "db2.example.com"];
+db:
+  host := $db_host$;
+  port := $db_port$;
+  credentials:
+    user := $db_user$;
+    password := $db_pass$;
 end
