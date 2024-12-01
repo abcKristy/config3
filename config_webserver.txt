@@ -1,9 +1,24 @@
 {# Конфигурация веб-сервера #}
-host = "127.0.0.1";
-port = 8080;
+{# Конфигурация веб-сервера #}
+
+const1 = 10;
+const2 = "Hello";
+const3 = 15;
+const4 = "abcd";
 
 begin
-host := $host$;
-port := $port$;
-routes := ["/home" "/about" "/contact"];
+    param1 := 20;
+    param2 := "World";
+    param3 := [1 2 3];
+    param4 := $const1$;
+    param5 := begin
+                  nested1 := "Nested";
+                  nested2 := $const2$;
+               end;
+end
+
+begin
+    arr_param := ["a" "b" "c"];
+    const_param := ["$const3$" "$const4$"];
+    num_param := 30;
 end
