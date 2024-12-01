@@ -2,6 +2,7 @@ import sys
 import re
 import yaml
 import traceback
+from collections import OrderedDict
 
 CONST_PATTERN = r"(\w+)\s*=\s*(.+?);"
 CONST_REF_PATTERN = r"\$(\w+)\$"
@@ -21,13 +22,14 @@ class ConfigParser:
         try:
             input_text = self._remove_comments(input_text)
             self._process_constants(input_text)
-            yaml_structure = self._process_structure(input_text)
+            input_text = self._replace_constants(input_text)
+            yaml_structure = self._process_structure(input_text, filename)
             return yaml.dump(yaml_structure, default_flow_style=False, allow_unicode=True, indent=2)
         except (re.error, SyntaxError) as e:
             tb = traceback.extract_tb(e.__traceback__)
             line_number = tb[-1].lineno
             line_content = input_text.splitlines()[line_number - 1].strip()
-            raise SyntaxError(f"Syntax Error in {filename} on line {line_number}: {e} near '{line_content}'")
+            raise SyntaxError(f"Syntax Error in {filename} on line {line_number}: {e} near '{line_content}'") from None
 
     def _remove_comments(self, text):
         return re.sub(COMMENT_PATTERN, "", text, flags=re.DOTALL)
@@ -63,34 +65,32 @@ class ConfigParser:
                 return str(value)
         return re.sub(CONST_REF_PATTERN, replace, text)
 
-    def _process_structure(self, text, indent=0):
+    def _process_structure(self, text, filename, existing_keys=None, max_recursion=100, recursion_level=0):
+        if recursion_level > max_recursion:
+            raise RecursionError(f"Maximum recursion depth exceeded in {filename}")
+
+        if existing_keys is None:
+            existing_keys = set()
+
         text = self._replace_constants(text)
-        result = []  # Use a list to accumulate results
+        result = []
+
         key_value_matches = re.findall(KEY_VALUE_PATTERN, text)
         for key, value in key_value_matches:
-            value = value.strip()
-            result.append({key: self._parse_value(value)})
+            key = key.strip()
+            if key not in existing_keys:
+                value = self._parse_value(value.strip(), filename)
+                result.append({key: value})
+                existing_keys.add(key)
 
         nested_blocks = re.findall(DICT_PATTERN, text, flags=re.DOTALL)
         for nested_block in nested_blocks:
-            nested_result = self._process_structure(nested_block, indent + 2)
-            if isinstance(nested_result, list):
-                result.extend(nested_result)  # Correctly extend the list
-            else:
-                result.append(nested_result)
+            nested_result = self._process_structure(nested_block, filename, existing_keys, max_recursion, recursion_level + 1)
+            result.extend(nested_result)
 
-        #Indentation
-        return [self._add_indentation(r, indent) for r in result] if result else {}
+        return result
 
-    def _add_indentation(self, data, indent):
-        if isinstance(data, dict):
-            return {f'  ' * indent + k: self._add_indentation(v, indent) for k, v in data.items()}
-        elif isinstance(data, list):
-            return [self._add_indentation(item, indent) for item in data]
-        else:
-            return data
-
-    def _parse_value(self, value):
+    def _parse_value(self, value, filename):
         value = value.strip()
         if re.match(STRING_PATTERN, value):
             return re.sub(r'\\"', '"', value[1:-1])
@@ -99,11 +99,11 @@ class ConfigParser:
         elif re.match(ARRAY_PATTERN, value):
             array_items_str = re.findall(ARRAY_PATTERN, value)[0]
             array_items = [item.strip() for item in re.split(r'\s*,\s*|\s+', array_items_str) if item]
-            return [self._parse_value(item) for item in array_items]
+            return [self._parse_value(item, filename) for item in array_items]
         elif re.match(DICT_PATTERN, value, flags=re.DOTALL):
-            return self._process_structure(value)
+            return self._process_structure(value, filename)
         else:
-            raise SyntaxError(f"Invalid value '{value}'")
+            raise SyntaxError(f"Invalid value '{value}' in {filename}")
 
 
 
@@ -126,7 +126,8 @@ def main():
         print(f"Syntax Error: {e}")
         sys.exit(1)
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"An unexpected error occurred: {e}")
+        traceback.print_exc() #Print the traceback for debugging purposes.
         sys.exit(1)
 
 
