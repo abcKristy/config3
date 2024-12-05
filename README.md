@@ -119,3 +119,11 @@ $имя$
 ![image](https://github.com/user-attachments/assets/ca014a75-77e2-4a58-a17e-a2326769b126)
 
 
+##  Тестирование
+
+![image](https://github.com/user-attachments/assets/26d3fee4-b1d3-432e-b81a-e18b0514ecb4)
+
+
+![image](https://github.com/user-attachments/assets/644c5d7a-e53b-4274-a347-74d736789759)
+
+
